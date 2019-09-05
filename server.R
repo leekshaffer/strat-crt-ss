@@ -40,11 +40,14 @@ shinyServer(function(input, output) {
                     CVs=input$cv))
       }
     } else if (input$S == 2) {
-      f2 <- 1 - f1
+      f2_a <- 1 - f1
+      f2 <- ifelse(f2_a < 0 | f2_a > 1, NA, f2_a)
       if (input$fix2=="O") {
-        pi02 <- (input$pi0 - f1*input$pi01)/f2
+        pi02_a <- (input$pi0 - f1*input$pi01)/f2
+        pi02 <- ifelse(pi02_a < 0 | pi02_a > 1, NA, pi02_a)
       } else {
-        pi02 <- input$pi02
+        pi02_a <- input$pi02
+        pi02 <- ifelse(pi02_a < 0 | pi02_a > 1, NA, pi02_a)
       }
       if (input$ICRT == "IRT") {
         if (input$txFX == "S") {
@@ -76,11 +79,14 @@ shinyServer(function(input, output) {
         }
       }
     } else {
-      f3 <- 1 - f1 - input$f2target
+      f3_a <- 1 - f1 - input$f2target
+      f3 <- ifelse(f3_a < 0 | f3_a > 1, NA, f3_a)
       if (input$fix3=="O") {
-        pi03 <- (input$pi0 - f1*input$pi01 - input$f2target*input$pi02)/f3
+        pi03_a <- (input$pi0 - f1*input$pi01 - input$f2target*input$pi02)/f3
+        pi03 <- ifelse(pi03_a < 0 | pi03_a > 1, NA, pi03_a)
       } else {
-        pi03 <- input$pi03
+        pi03_a <- input$pi03
+        pi03 <- ifelse(pi03_a < 0 | pi03_a > 1, NA, pi03_a)
       }
       if (input$ICRT == "IRT") {
         if (input$txFX == "S") {
@@ -172,24 +178,30 @@ shinyServer(function(input, output) {
       ResDF <- RangeResultsFn(f1vals)
       
       if (input$S==2) {
-        fsDF <- data.frame(f1=f1vals, f2=rep(1,num)-f1vals)
+        f2s_a <- rep(1,num)-f1vals
+        f2s <- ifelse(f2s_a < 0 | f2s_a > 1, NA, f2s_a)
+        fsDF <- data.frame(f1=f1vals, f2=f2s)
       } else {
+        f3s_a <- rep(1,num)-f1vals-rep(input$f2target, num)
+        f3s <- ifelse(f3s_a < 0 | f3s_a > 1, NA, f3s_a)
         fsDF <- data.frame(f1=f1vals, f2=rep(input$f2target, num),
-                           f3=rep(1,num)-f1vals-rep(input$f2target, num))
+                           f3=f3s)
       }
       
       if (input$S==2) {
         if (input$fix2=="S") {
           pi02s <- rep(input$pi02,num)
         } else {
-          pi02s <- (input$pi0 - f1vals*input$pi01)/fsDF$f2
+          pi02s_a <- (input$pi0 - f1vals*input$pi01)/fsDF$f2
+          pi02s <- ifelse(pi02s_a < 0 | pi02s_a > 1, NA, pi02s_a)
         }
         pisDF <- data.frame(pi01=rep(input$pi01,num),pi02=pi02s)
       } else {
         if (input$fix3=="S") {
           pi03s <- rep(input$pi03,num)
         } else {
-          pi03s <- (input$pi0 - f1vals*input$pi01 - input$f2target*input$pi02)/fsDF$f3
+          pi03s_a <- (input$pi0 - f1vals*input$pi01 - input$f2target*input$pi02)/fsDF$f3
+          pi03s <- ifelse(pi03s_a < 0 | pi03s_a > 1, NA, pi03s_a)
         }
         pisDF <- data.frame(pi01=rep(input$pi01,num),pi02=rep(input$pi02,num),pi03=pi03s)
       }
@@ -464,6 +476,7 @@ shinyServer(function(input, output) {
   #### Treatment Effects #####
   
   output$UIFXa <- renderUI({
+    req(input$S)
     switch(input$S,
            "1"=NULL,
            "2"=box(width=12,
@@ -478,10 +491,12 @@ shinyServer(function(input, output) {
   })
   
   output$UIFXb <- renderUI({
+    req(input$S)
     if (input$S == 1) {
       box(title="Target Effect Size (\U03B2)", status="primary", width=12, solidHeader=TRUE,
           numericInput("betast", NULL, value=log(.5)))
     } else {
+      req(input$txFX)
       switch(input$txFX,
              "O"=box(title="Target Overall Effect Size (\U03B2)", status="primary",
                      width=12, solidHeader=TRUE,
@@ -497,6 +512,7 @@ shinyServer(function(input, output) {
   #### Stratification Info Column ####
   
   output$UIstrat <- renderUI({
+    req(input$S)
     switch(input$S,
            "1" = box(
              title="Overall Info", status="warning", solidHeader=TRUE,
@@ -516,9 +532,11 @@ shinyServer(function(input, output) {
   })
   
   output$UIstrat2a <- renderUI({
+    req(input$S)
     if (input$S != 2) {
       NULL
       } else {
+        req(input$fix2)
       switch(input$fix2,
              "O"=box(title="Overall Info", status="warning", solidHeader=TRUE,
                            width=12,
@@ -533,9 +551,11 @@ shinyServer(function(input, output) {
     }})
   
   output$UIstrat2b <- renderUI({
+    req(input$S)
     if (input$S != 2) {
       NULL
       } else {
+        req(input$fix2)
       switch(input$fix2,
              "O"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
                            width=12,
@@ -550,8 +570,10 @@ shinyServer(function(input, output) {
     }})
   
   output$UIstrat3a <- renderUI({
+    req(input$S)
     if (input$S != 3) {NULL}
     else {
+      req(input$fix3)
       switch(input$fix3,
              "O"=box(title="Overall Info", status="warning", solidHeader=TRUE,
                            width=12,
@@ -566,8 +588,10 @@ shinyServer(function(input, output) {
     }})
   
   output$UIstrat3b <- renderUI({
+    req(input$S)
     if (input$S != 3) {NULL}
     else {
+      req(input$fix3)
       switch(input$fix3,
              "O"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
                            width=12,
@@ -584,8 +608,10 @@ shinyServer(function(input, output) {
     }})
   
   output$UIstrat3c <- renderUI({
+    req(input$S)
     if (input$S != 3) {NULL}
     else {
+      req(input$fix3)
       switch(input$fix3,
              "O"=box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
                            width=12,
@@ -603,6 +629,7 @@ shinyServer(function(input, output) {
   #### Cluster Info Column ####
   
   output$UIclust <- renderUI({
+    req(input$ICRT)
     switch(input$ICRT,
            "IRT" = NULL,
            "CRT" = box(
@@ -619,20 +646,25 @@ shinyServer(function(input, output) {
 #### Warning/Error Box ####
   
 UIerr1 <- function() {
+  req(input$S)
   if (input$S == 1) {
+    req(input$betast)
     if (input$betast == 0) {
       return(p("Error: Target Effect Size Must Be Non-Zero"))
     } else {
       return(NULL)
     }
   } else {
+    req(input$txFX)
     if (input$txFX == "O") {
+      req(input$beta)
       if (input$beta == 0) {
         return(p("Error: Target Effect Size Must Be Non-Zero"))
       } else {
         return(NULL)
       }
     } else {
+      req(input$betast)
       if (input$betast == 0) {
         return(p("Error: Target Effect Size Must Be Non-Zero"))
       } else {
@@ -643,8 +675,11 @@ UIerr1 <- function() {
 }
   
   UIerr2 <- function() {
+    req(input$S)
     if (input$S==2) {
+      req(input$fix2)
       if (input$fix2=="O") {
+        req(input$pi0,input$f1target,input$pi01)
         if ((input$pi0 - input$f1target*input$pi01)/(1-input$f1target) < 0 | (input$pi0 - input$f1target*input$pi01)/(1-input$f1target) > 1) {
           return(p("Error: Gives target \U03C0\U2080\U2082 outside of [0,1]"))
         }
@@ -654,8 +689,11 @@ UIerr1 <- function() {
   }
   
   UIerr3 <- function() {
+    req(input$S)
     if (input$S==3) {
+      req(input$fix3)
       if (input$fix3=="O") {
+        req(input$f1target,input$f2target,input$pi0,input$pi01,input$pi02)
         f3 <- 1 - input$f1target - input$f2target
         pi03 <- (input$pi0 - input$f1target*input$pi01 - input$f2target*input$pi02)/f3
         if (pi03 < 0 | pi03 > 1) {
@@ -667,7 +705,9 @@ UIerr1 <- function() {
   }
   
   UIerr4 <- function() {
+    req(input$ICRT)
     if (input$ICRT == "CRT") {
+      req(input$m)
       if (input$m < 1) {
         return(p("Error: Mean Cluster Size Must Be At Least One"))
       }
@@ -676,7 +716,9 @@ UIerr1 <- function() {
   }
   
   UIerr5 <- function() {
+    req(input$ICRT)
     if (input$ICRT == "CRT") {
+      req(input$cv)
       if (input$cv < 0) {
         return(p("Error: Coefficient of Variation of Cluster Size Must Be Non-Negative"))
       }
@@ -700,6 +742,7 @@ output$UIerrs <- renderUI({
 })
   
 output$uiTargErr <- renderUI({
+  req(input$f1target,input$S,input$ICRT)
   ResCapt <- ResultsFnCapt(input$f1target)
   if (sum(ResCapt=="A")==length(ResCapt)) {
     box(title="Target Trial Errors", status="danger", solidHeader=TRUE,
