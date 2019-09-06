@@ -29,7 +29,8 @@ sidebar <- dashboardSidebar(
   h5("For questions, contact Lee Kennedy-Shaffer at:"),
   h6("lee_kennedyshaffer@g.harvard.edu"),
   h5("For underlying code, visit:"),
-  h6("https://github.com/leekshaffer")
+  h6("https://github.com/leekshaffer"),
+  h6("For more than 3 strata, see the underlying R code. Caution should be exercised when some strata have few clusters, as the sample size formulae implemented here rely on asymptotics within each stratum. See the cited article for more detail.")
 )
 
 body <- dashboardBody(
@@ -37,7 +38,7 @@ body <- dashboardBody(
     tabItem(tabName="params",
             fluidRow(uiOutput("UIerrs")),
             fluidRow(
-              column(width=3,
+              column(width=4,
               box(
                 title="Power and Level", status="primary", solidHeader=TRUE,
                 width=12,
@@ -55,28 +56,36 @@ body <- dashboardBody(
               uiOutput("UIFXa"),
               uiOutput("UIFXb")),
               
-              column(width=6,
+              column(width=4,
               box(title="Number of Strata", status="warning", solidHeader=TRUE,
                   width=12,
-                  #numericInput("S","Number of Strata",value=2),
                   radioButtons("S",NULL,
                                choices=c(1,2,3), selected=c(1),
-                               inline=TRUE),
-                  helpText("For more strata, see the underlying R code. Caution should be exercised when some strata have few clusters, as the sample size formulae implemented here rely on asymptotics within each stratum. See the paper cited at left for more detail.")),
+                               inline=TRUE)
+                  ),
               uiOutput("UIstrat"),
-              uiOutput("UIstrat2a"),
-              uiOutput("UIstrat2b"),
-              uiOutput("UIstrat3a"),
-              uiOutput("UIstrat3b"),
-              uiOutput("UIstrat3c")),
+              uiOutput("UIstrat2Oa"),
+              uiOutput("UIstrat2Sa"),
+              uiOutput("UIstrat2Ob"),
+              uiOutput("UIstrat2Sb"),
+              #uiOutput("UIstrat2a"),
+              #uiOutput("UIstrat2b"),
+              uiOutput("UIstrat3Oa"),
+              uiOutput("UIstrat3Sa"),
+              uiOutput("UIstrat3Ob"),
+              uiOutput("UIstrat3Sb"),
+              uiOutput("UIstrat3Oc"),
+              uiOutput("UIstrat3Sc")),
               
-              column(width=3,
+              column(width=4,
               box(title="IRT or CRT", status="info", solidHeader=TRUE,
                   width=12,
                   radioButtons("ICRT",NULL,
                                choices=c("IRT","CRT"), selected=c("IRT"),
                                inline=TRUE)),
-              uiOutput("UIclust")
+              uiOutput("UIclusta"),
+              uiOutput("UIclustb"),
+              uiOutput("UIclustc")
               )
               )
             ),

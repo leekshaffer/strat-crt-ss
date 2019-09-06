@@ -46,8 +46,7 @@ shinyServer(function(input, output) {
         pi02_a <- (input$pi0 - f1*input$pi01)/f2
         pi02 <- ifelse(pi02_a < 0 | pi02_a > 1, NA, pi02_a)
       } else {
-        pi02_a <- input$pi02
-        pi02 <- ifelse(pi02_a < 0 | pi02_a > 1, NA, pi02_a)
+        pi02 <- input$pi02
       }
       if (input$ICRT == "IRT") {
         if (input$txFX == "S") {
@@ -63,19 +62,36 @@ shinyServer(function(input, output) {
         }
       } else {
         if (input$txFX == "S") {
-          return(RCRT(pi0s=c(input$pi01,pi02),fs=c(f1,f2),
+          if (input$rhoChoice == "C") {
+            return(RCRT(pi0s=c(input$pi01,pi02),fs=c(f1,f2),
                       alpha=input$sig/100, gamma=1-input$power/100,
                       logORst=input$betast,mbars=input$m,
                       rho0s=ICC.common(pi0s=c(input$pi01,pi02),fs=c(f1,f2),
                                        rho0=input$rho0)$rho0st,
                       CVs=input$cv))
+          }
+          else {
+            return(RCRT(pi0s=c(input$pi01,pi02), fs=c(f1,f2),
+                        alpha=input$sig/100, gamma=1-input$power/100,
+                        logORst=input$betast, mbars=c(input$m1,input$m2),
+                        rho0s=c(input$rho01, input$rho02),
+                        rho0=input$rho0, CVs=c(input$cv1,input$cv2)))
+          }
         } else {
-          return(RCRT(pi0s=c(input$pi01,pi02),fs=c(f1,f2),
+          if (input$rhoChoice == "C") {
+            return(RCRT(pi0s=c(input$pi01,pi02),fs=c(f1,f2),
                       alpha=input$sig/100, gamma=1-input$power/100,
-                      logOR=input$beta,mbars=input$m,
+                      logOR=input$beta, mbars=input$m,
                       rho0s=ICC.common(pi0s=c(input$pi01,pi02),fs=c(f1,f2),
                                        rho0=input$rho0)$rho0st,
                       CVs=input$cv))
+          } else {
+            return(RCRT(pi0s=c(input$pi01,pi02), fs=c(f1,f2),
+                        alpha=input$sig/100, gamma=1-input$power/100,
+                        logOR=input$beta, mbars=c(input$m1,input$m2),
+                        rho0s=c(input$rho01,input$rho02), rho0=input$rho0,
+                        CVs=c(input$cv1,input$cv2)))
+          }
         }
       }
     } else {
@@ -93,7 +109,7 @@ shinyServer(function(input, output) {
           return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
                       fs=c(f1,input$f2target,f3),
                       alpha=input$sig/100, gamma=1-input$power/100,
-                      Fover=1,F.strats=1,
+                      Fover=1, F.strats=1,
                       logORst=input$betast))
         } else {
           return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
@@ -104,7 +120,8 @@ shinyServer(function(input, output) {
         }
       } else {
         if (input$txFX == "S") {
-          return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
+          if (input$rhoChoice == "C") {
+            return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
                       fs=c(f1,input$f2target,f3),
                       alpha=input$sig/100, gamma=1-input$power/100,
                       logORst=input$betast,
@@ -113,8 +130,19 @@ shinyServer(function(input, output) {
                                        fs=c(f1,input$f2target,f3),
                                        rho0=input$rho0)$rho0st,
                       CVs=input$cv))
+          } else {
+            return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
+                        fs=c(f1,input$f2target,f3),
+                        alpha=input$sig/100, gamma=1-input$power/100,
+                        logORst=input$betast,
+                        mbars=c(input$m1,input$m2,input$m3),
+                        rho0s=c(input$rho01,input$rho02,input$rho03),
+                        rho0=input$rho0,
+                        CVs=c(input$cv1,input$cv2,input$cv3)))
+          }
         } else {
-          return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
+          if (input$rhoChoice=="C") {
+            return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
                       fs=c(f1,input$f2target,f3),
                       alpha=input$sig/100, gamma=1-input$power/100,
                       logOR=input$beta,
@@ -123,6 +151,16 @@ shinyServer(function(input, output) {
                                        fs=c(f1,input$f2target,f3),
                                        rho0=input$rho0)$rho0st,
                       CVs=input$cv))
+          } else {
+            return(RCRT(pi0s=c(input$pi01,input$pi02,pi03),
+                        fs=c(f1,input$f2target,f3),
+                        alpha=input$sig/100, gamma=1-input$power/100,
+                        logOR=input$beta,
+                        mbars=c(input$m1,input$m2,input$m3),
+                        rho0s=c(input$rho01,input$rho02,input$rho03),
+                        rho0=input$rho0,
+                        CVs=c(input$cv1,input$cv2,input$cv3)))
+          }
         }
       }
     }
@@ -166,7 +204,10 @@ shinyServer(function(input, output) {
     
   output$UIdata <- renderUI({
     if (input$S==1) {
-      box(title="No Sensitivity Plots Available for 1-Stratum Calculations",
+      box(title="No Sensitivity Tables Available for 1-Stratum Calculations",
+          width=12)
+    } else if (input$ICRT == "CRT" & input$rhoChoice == "S") {
+      box(title="No Sensitivity Tables Available for Specified Within-Stratum ICCs, Since the Overall ICC Depends on f\U2081 in Unknown Way",
           width=12)
     } else {
       range2 <- round(input$range, digits=2)
@@ -246,6 +287,9 @@ shinyServer(function(input, output) {
     if (input$S==1) {
       box(title="No Sensitivity Plots Available for 1-Stratum Calculations",
           width=12)
+    } else if (input$ICRT == "CRT" & input$rhoChoice == "S") {
+      box(title="No Sensitivity Plots Available for Specified Within-Stratum ICCs, Since the Overall ICC Depends on f\U2081 in Unknown Way",
+          width=12)
     } else {
       range2 <- round(input$range, digits=2)
       range2[1] <- ifelse(range2[1]==0, .01, range2[1])
@@ -293,6 +337,8 @@ shinyServer(function(input, output) {
   
   output$UIplotsb <- renderUI({
     if (input$S==1) {
+      NULL
+    } else if (input$ICRT == "CRT" & input$rhoChoice == "S") {
       NULL
     } else {
       range2 <- round(input$range, digits=2)
@@ -344,7 +390,6 @@ shinyServer(function(input, output) {
   
   ###### DYNAMIC BOX RESULTS UI #########
 
-  
   output$NCRTs <- renderUI({
     if (input$S==1) {
       ResDF <- ResultsFnCapt(1)
@@ -352,11 +397,6 @@ shinyServer(function(input, output) {
       ResDF <- ResultsFnCapt(input$f1target)
     }
     
-    # infoBox(
-    #   ifelse(input$ICRT=="IRT","N_IRT(S)","N_CRT(S)"), 
-    #   paste0(format(ceiling(ResDF$NCRTs), big.mark=",")),
-    #   color="purple"
-    # )
     box(title=ifelse(input$ICRT=="IRT", "Sample Size Required for Stratified IRT, N_IRT(S)", "Sample Size Required for Stratified CRT, N_CRT(S)"), status="primary", solidHeader=TRUE, width=4,
         h4(paste0(format(ceiling(ResDF$NCRTs), big.mark=","))))
   })
@@ -368,11 +408,6 @@ shinyServer(function(input, output) {
       ResDF <- ResultsFnCapt(input$f1target)
     }
     
-    # infoBox(
-    #   ifelse(input$ICRT=="IRT","N_IRT","N_CRT"), 
-    #   paste0(format(ceiling(ResDF$NCRT), big.mark=",")),
-    #   color="orange"
-    # )
     box(title=ifelse(input$ICRT=="IRT", "Sample Size Required for Unstratified IRT, N_IRT", "Sample Size Required for Unstratified CRT, N_CRT"), status="warning", solidHeader=TRUE, width=4,
         h4(paste0(format(ceiling(ResDF$NCRT), big.mark=","))))
   })
@@ -384,11 +419,6 @@ shinyServer(function(input, output) {
       ResDF <- ResultsFnCapt(input$f1target)
     }
     
-    # infoBox(
-    #   ifelse(input$ICRT=="IRT","R_IRT","R_CRT"), 
-    #   paste0(format(round(ResDF$RCRT, digits=3), nsmall=3)),
-    #   color="olive"
-    # )
     box(title=ifelse(input$ICRT=="IRT", "Ratio of Required Sample Sizes, R_IRT", "Ratio of Required Sample Sizes, R_CRT"), status="success", solidHeader=TRUE, width=4,
         h4(paste0(format(round(ResDF$RCRT, digits=3), nsmall=3))))
   })
@@ -400,11 +430,6 @@ shinyServer(function(input, output) {
       ResDF <- ResultsFnCapt(input$f1target)
     }
     
-    # infoBox(
-    #   "\U03B2", 
-    #   paste0(format(round(ResDF$logOR, digits=3), nsmall=3)),
-    #   color="orange"
-    # )
     box(title="Overall Treatment Effect, \U03B2", status="warning", solidHeader=TRUE, width=4,
         h4(paste0(format(round(ResDF$logOR, digits=3), nsmall=3))))
   })
@@ -416,11 +441,6 @@ shinyServer(function(input, output) {
       ResDF <- ResultsFnCapt(input$f1target)
     }
     
-    # infoBox(
-    #   "\U03B2\U002A", 
-    #   paste0(format(round(ResDF$logORst, digits=3), nsmall=3)),
-    #   color="purple"
-    # )
     box(title="Within-Stratum Treatment Effect, \U03B2\U002A", status="primary", solidHeader=TRUE, width=4,
         h4(paste0(format(round(ResDF$logORst, digits=3), nsmall=3))))
   })
@@ -432,20 +452,61 @@ shinyServer(function(input, output) {
       ResDF <- ResultsFnCapt(input$f1target)
     }
     
-    switch(input$ICRT,
-           "IRT"=NULL,
-           "CRT"=fluidRow(
-             # infoBox("\U03C1\U2080\U002A",
-             #         paste0(format(round(ResDF$rho0s[1], digits=3), nsmall=3)),
-             #         color="purple"),
-             box(title="Within-Stratum ICC, \U03C1\U2080\U002A", status="primary", solidHeader=TRUE, width=4,
-                 h4(paste0(format(round(ResDF$rho0s[1], digits=3), nsmall=3)))),
-             box(title="Overall ICC, \U03C1\U2080", status="warning", solidHeader=TRUE, width=4,
-                 h4(paste0(format(round(ResDF$rho0, digits=3), nsmall=3))))))
+    if (input$ICRT=="IRT") {
+      NULL
+    } else if (input$S == 1) {
+      fluidRow(
+        box(title="Within-Stratum ICC, \U03C1\U2080\U002A", status="primary", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(ResDF$rho0s[1], digits=3), nsmall=3)))),
+        box(title="Overall ICC, \U03C1\U2080", status="warning", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(input$rho0, digits=3), nsmall=3)))))
+    } else if (input$rhoChoice=="C") {
+      fluidRow(
+        box(title="Within-Stratum ICC, \U03C1\U2080\U002A", status="primary", solidHeader=TRUE, width=4,
+          h4(paste0(format(round(ResDF$rho0s[1], digits=3), nsmall=3)))),
+        box(title="Overall ICC, \U03C1\U2080", status="warning", solidHeader=TRUE, width=4,
+          h4(paste0(format(round(input$rho0, digits=3), nsmall=3)))))
+    } else {
+      if (input$S == 2) {
+        fluidRow(
+          box(title="Within-Stratum ICCs: \U03C1\U2080\U2081, \U03C1\U2080\U2082", status="primary", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(ResDF$rho0s[1], digits=3), nsmall=3),", ",format(round(ResDF$rho0s[2], digits=3), nsmall=3)))),
+          box(title="Overall ICC, \U03C1\U2080", status="warning", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(input$rho0, digits=3), nsmall=3)))))
+      } else if (input$S == 3) {
+        fluidRow(
+          box(title="Within-Stratum ICCs: \U03C1\U2080\U2081, \U03C1\U2080\U2082, \U03C1\U2080\U2083", status="primary", solidHeader=TRUE, width=4,
+              h4(paste0(format(round(ResDF$rho0s[1], digits=3), nsmall=3),", ",format(round(ResDF$rho0s[2], digits=3), nsmall=3),", ",format(round(ResDF$rho0s[3], digits=3), nsmall=3)))),
+          box(title="Overall ICC, \U03C1\U2080", status="warning", solidHeader=TRUE, width=4,
+              h4(paste0(format(round(input$rho0, digits=3), nsmall=3)))))
+      }
+    }
   })
   
   output$UIFrow <- renderUI({
-    Fval <- 1+((input$cv^2+1)*input$m-1)*input$rho0
+    if (input$ICRT == "IRT") {
+    } else {
+    if (input$S==1) {
+      Fval <- 1+((input$cv^2+1)*input$m-1)*input$rho0
+    } else {
+      if (input$rhoChoice=="C") {
+        Fval <- 1+((input$cv^2+1)*input$m-1)*input$rho0
+      }
+      if (input$S==2) {
+        fs <- c(input$f1target,1-input$f1target)
+        mbars <- c(input$m1, input$m2)
+        CVs <- c(input$cv1, input$cv2)
+      } else if (input$S == 3) {
+        fs <- c(input$f1target, input$f2target, 1-input$f1target-input$f2target)
+        mbars <- c(input$m1, input$m2, input$m3)
+        CVs <- c(input$cv1, input$cv2, input$cv3)
+      }
+      mbar.over <- 1/sum(fs/mbars)
+      gs <- (fs/mbars)/sum(fs/mbars)
+      CV <- sqrt(sum(gs*(CVs*mbars)^2) + sum(gs*(mbars-mbar.over)^2))/mbar.over
+      Fval <- 1 + ((CV^2+1)*mbar.over-1)*input$rho0
+    }
+    }
     
     if (input$S==1) {
       ResDF <- ResultsFnCapt(1)
@@ -453,19 +514,33 @@ shinyServer(function(input, output) {
       ResDF <- ResultsFnCapt(input$f1target)
     }
     
-    switch(input$ICRT,
-           "IRT"=NULL,
-           "CRT"=fluidRow(
-             box(title="Within-Stratum Design Effect, F\U002A", status="primary", solidHeader=TRUE, width=4,
-                 h4(paste0(format(round(ResDF$F.strats[1], digits=3), nsmall=3)))),
-             box(title="Overall Design Effect, F", status="warning", solidHeader=TRUE, width=4,
-                 h4(paste0(format(round(Fval, digits=3), nsmall=3))))))
-             # infoBox("F\U002A",
-             #         paste0(format(round(ResDF$F.strats[1], digits=3), nsmall=3)),
-             #         color="purple"),
-             # infoBox("F",
-             #         paste0(format(round(Fval, digits=3), nsmall=3)),
-             #         color="orange")))
+    if (input$ICRT=="IRT") {
+      NULL
+    } else if (input$S == 1) {
+      fluidRow(
+        box(title="Within-Stratum Design Effect, F\U002A", status="primary", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(ResDF$F.strats[1], digits=3), nsmall=3)))),
+        box(title="Overall Design Effect, F", status="warning", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(Fval, digits=3), nsmall=3)))))
+    } else if (input$rhoChoice == "C") {
+      fluidRow(
+        box(title="Within-Stratum Design Effect, F\U002A", status="primary", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(ResDF$F.strats[1], digits=3), nsmall=3)))),
+        box(title="Overall Design Effect, F", status="warning", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(Fval, digits=3), nsmall=3)))))
+    } else if (input$S == 2) {
+      fluidRow(
+        box(title="Within-Stratum Design Effects: F\U2081, F\U2082", status="primary", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(ResDF$F.strats[1], digits=3), nsmall=3),", ",format(round(ResDF$F.strats[2], digits=3), nsmall=3)))),
+        box(title="Overall Design Effect, F", status="warning", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(Fval, digits=3), nsmall=3)))))
+    } else if (input$S == 3) {
+      fluidRow(
+        box(title="Within-Stratum Design Effects: F\U2081, F\U2082, F\U2083", status="primary", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(ResDF$F.strats[1], digits=3), nsmall=3),", ",format(round(ResDF$F.strats[2], digits=3), nsmall=3),", ",format(round(ResDF$F.strats[3], digits=3), nsmall=3)))),
+        box(title="Overall Design Effect, F", status="warning", solidHeader=TRUE, width=4,
+            h4(paste0(format(round(Fval, digits=3), nsmall=3)))))
+    }
   })
 
   
@@ -482,11 +557,11 @@ shinyServer(function(input, output) {
            "2"=box(width=12,
                    helpText("Fix Overall Treatment Effect (\U03B2) or Common Within-Stratum Treatment Effect (\U03B2\U002A)?"),
                    radioButtons("txFX",NULL,choices=list("Overall"="O","Within-Stratum"="S"),
-                                selected=c("S"),inline=FALSE)),
+                                selected=c("O"),inline=FALSE)),
            "3"=box(width=12,
                    helpText("Fix Overall Treatment Effect (\U03B2) or Common Within-Stratum Treatment Effect (\U03B2\U002A)?"),
                    radioButtons("txFX",NULL,choices=list("Overall"="O","Within-Stratum"="S"),
-                                selected=c("S"),inline=FALSE))
+                                selected=c("O"),inline=FALSE))
     )
   })
   
@@ -531,115 +606,358 @@ shinyServer(function(input, output) {
            ))
   })
   
-  output$UIstrat2a <- renderUI({
+  output$UIstrat2Oa <- renderUI({
     req(input$S)
     if (input$S != 2) {
       NULL
+    } else {
+      req(input$fix2)
+      if (input$fix2 == "O") {
+        box(title="Overall Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("pi0","\U03C0\U2080", min=0, max=1, value=.05))
       } else {
-        req(input$fix2)
-      switch(input$fix2,
-             "O"=box(title="Overall Info", status="warning", solidHeader=TRUE,
-                           width=12,
-                           sliderInput("pi0","\U03C0\U2080", min=0, max=1, value=.05)),
-             "S"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
-                                   width=12,
-                                   sliderInput("range", "Range of f\U2081", min = 0,
-                                               max = 1, value = c(.25, .75)),
-                                   sliderInput("f1target", "Target f\U2081", min = 0,
-                                               max = 1, value = c(.5)),
-                                   sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04)))
-    }})
+        NULL
+      }
+    }
+  })
   
-  output$UIstrat2b <- renderUI({
+  output$UIstrat2Ob <- renderUI({
     req(input$S)
     if (input$S != 2) {
       NULL
+    } else {
+      req(input$fix2)
+      if (input$fix2 == "O") {
+        box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("range", "Range of f\U2081", min = 0,
+                        max = 1, value = c(.25, .75)),
+            sliderInput("f1target", "Target f\U2081", min = 0,
+                        max = 1, value = c(.5)),
+            sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04))
       } else {
-        req(input$fix2)
-      switch(input$fix2,
-             "O"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
-                           width=12,
-                           sliderInput("range", "Range of f\U2081", min = 0,
-                                       max = 1, value = c(.25, .75)),
-                           sliderInput("f1target", "Target f\U2081", min = 0,
-                                       max = 1, value = c(.5)),
-                           sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04)),
-             "S"=box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
-                                   width=12,
-                                   sliderInput("pi02", "\U03C0\U2080\U2082", min=0, max=1, value=.06)))
-    }})
+        NULL
+      }
+    }
+  })
   
-  output$UIstrat3a <- renderUI({
+  output$UIstrat2Sa <- renderUI({
     req(input$S)
-    if (input$S != 3) {NULL}
-    else {
-      req(input$fix3)
-      switch(input$fix3,
-             "O"=box(title="Overall Info", status="warning", solidHeader=TRUE,
-                           width=12,
-                           sliderInput("pi0","\U03C0\U2080", min=0, max=1, value=.05)),
-             "S"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
-                                   width=12,
-                                   sliderInput("range", "Range of f\U2081", min = 0,
-                                               max = 1, value = c(1/6, 1/2)),
-                                   sliderInput("f1target", "Target f\U2081", min = 0,
-                                               max = 1, value = c(1/3)),
-                                   sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04)))
-    }})
+    if (input$S != 2) {
+      NULL
+    } else {
+      req(input$fix2)
+      if (input$fix2 == "S") {
+        box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("range", "Range of f\U2081", min = 0,
+                        max = 1, value = c(.25, .75)),
+            sliderInput("f1target", "Target f\U2081", min = 0,
+                        max = 1, value = c(.5)),
+            sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04))
+      } else {
+        NULL
+      }
+    }
+  })
   
-  output$UIstrat3b <- renderUI({
+  output$UIstrat2Sb <- renderUI({
     req(input$S)
-    if (input$S != 3) {NULL}
-    else {
-      req(input$fix3)
-      switch(input$fix3,
-             "O"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
-                           width=12,
-                           sliderInput("range", "Range of f\U2081", min = 0,
-                                       max = 1, value = c(1/6, 1/2)),
-                           sliderInput("f1target", "Target f\U2081", min = 0,
-                                       max = 1, value = c(1/3)),
-                           sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04)),
-             "S"=box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
-                                   width=12,
-                                   sliderInput("f2target", "Target f\U2082", min = 0,
-                                               max = 1, value=c(1/3)),
-                                   sliderInput("pi02", "\U03C0\U2080\U2082", min=0, max=1, value=.06)))
-    }})
+    if (input$S != 2) {
+      NULL
+    } else {
+      req(input$fix2)
+      if (input$fix2 == "S") {
+        box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("pi02", "\U03C0\U2080\U2082", min=0, max=1, value=.06))
+      } else {
+        NULL
+      }
+    }
+  })
   
-  output$UIstrat3c <- renderUI({
+  # output$UIstrat2a <- renderUI({
+  #   req(input$S)
+  #   if (input$S != 2) {
+  #     NULL
+  #     } else {
+  #       req(input$fix2)
+  #       if (input$fix2 == "O") {
+  #         box(title="Overall Info", status="warning", solidHeader=TRUE,
+  #             width=12,
+  #             sliderInput("pi0","\U03C0\U2080", min=0, max=1, value=.05))
+  #       } else {
+  #         box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+  #             width=12,
+  #             sliderInput("range", "Range of f\U2081", min = 0,
+  #                         max = 1, value = c(.25, .75)),
+  #             sliderInput("f1target", "Target f\U2081", min = 0,
+  #                         max = 1, value = c(.5)),
+  #             sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04))
+  #       }}})
+  # 
+  # output$UIstrat2b <- renderUI({
+  #   req(input$S)
+  #   if (input$S != 2) {
+  #     NULL
+  #     } else {
+  #       req(input$fix2)
+  #     switch(input$fix2,
+  #            "O"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+  #                          width=12,
+  #                          sliderInput("range", "Range of f\U2081", min = 0,
+  #                                      max = 1, value = c(.25, .75)),
+  #                          sliderInput("f1target", "Target f\U2081", min = 0,
+  #                                      max = 1, value = c(.5)),
+  #                          sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04)),
+  #            "S"=box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
+  #                                  width=12,
+  #                                  sliderInput("pi02", "\U03C0\U2080\U2082", min=0, max=1, value=.06)))
+  #   }})
+  
+  output$UIstrat3Oa <- renderUI({
     req(input$S)
-    if (input$S != 3) {NULL}
-    else {
+    if (input$S != 3) {
+      NULL
+    } else {
       req(input$fix3)
-      switch(input$fix3,
-             "O"=box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
-                           width=12,
-                           sliderInput("f2target", "Target f\U2082", min = 0,
-                                       max = 1, value = c(1/3)),
-                           sliderInput("pi02","\U03C0\U2080\U2082", min=0, max=1, value=.06)),
-             "S"=box(title="Stratum 3 Info", status="warning", solidHeader=TRUE,
-                                   width=12,
-                                   sliderInput("pi03", "\U03C0\U2080\U2083", min=0, max=1, value=.05)))
-    }})
+      if (input$fix3 == "O") {
+        box(title="Overall Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("pi0","\U03C0\U2080", min=0, max=1, value=.05))
+      } else {
+        NULL
+      }
+    }
+  })
+  
+  output$UIstrat3Ob <- renderUI({
+    req(input$S)
+    if (input$S != 3) {
+      NULL
+    } else {
+      req(input$fix3)
+      if (input$fix3 == "O") {
+        box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("range", "Range of f\U2081", min = 0,
+                        max = 1, value = c(1/6, 1/2)),
+            sliderInput("f1target", "Target f\U2081", min = 0,
+                        max = 1, value = c(1/3)),
+            sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04))
+      } else {
+        NULL
+      }
+    }
+  })
+  
+  output$UIstrat3Oc <- renderUI({
+    req(input$S)
+    if (input$S != 3) {
+      NULL
+    } else {
+      req(input$fix3)
+      if (input$fix3 == "O") {
+        box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("f2target", "Target f\U2082", min = 0,
+                        max = 1, value = c(1/3)),
+            sliderInput("pi02","\U03C0\U2080\U2082", min=0, max=1, value=.06))
+      } else {
+        NULL
+      }
+    }
+  })
+  
+  output$UIstrat3Sa <- renderUI({
+    req(input$S)
+    if (input$S != 3) {
+      NULL
+    } else {
+      req(input$fix3)
+      if (input$fix3 == "S") {
+        box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("range", "Range of f\U2081", min = 0,
+                        max = 1, value = c(1/6, 1/2)),
+            sliderInput("f1target", "Target f\U2081", min = 0,
+                        max = 1, value = c(1/3)),
+            sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04))
+      } else {
+        NULL
+      }
+    }
+  })
+  
+  output$UIstrat3Sb <- renderUI({
+    req(input$S)
+    if (input$S != 3) {
+      NULL
+    } else {
+      req(input$fix3)
+      if (input$fix3 == "S") {
+        box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("f2target", "Target f\U2082", min = 0,
+                        max = 1, value=c(1/3)),
+            sliderInput("pi02", "\U03C0\U2080\U2082", min=0, max=1, value=.06))
+      } else {
+        NULL
+      }
+    }
+  })
+  
+  output$UIstrat3Sc <- renderUI({
+    req(input$S)
+    if (input$S != 3) {
+      NULL
+    } else {
+      req(input$fix3)
+      if (input$fix3 == "S") {
+        box(title="Stratum 3 Info", status="warning", solidHeader=TRUE,
+            width=12,
+            sliderInput("pi03", "\U03C0\U2080\U2083", min=0, max=1, value=.05))
+      } else {
+        NULL
+      }
+    }
+  })
+  
+  
+  
+  
+  
+  
+  
+  # output$UIstrat3a <- renderUI({
+  #   req(input$S)
+  #   if (input$S != 3) {NULL}
+  #   else {
+  #     req(input$fix3)
+  #     switch(input$fix3,
+  #            "O"=box(title="Overall Info", status="warning", solidHeader=TRUE,
+  #                          width=12,
+  #                          sliderInput("pi0","\U03C0\U2080", min=0, max=1, value=.05)),
+  #            "S"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+  #                                  width=12,
+  #                                  sliderInput("range", "Range of f\U2081", min = 0,
+  #                                              max = 1, value = c(1/6, 1/2)),
+  #                                  sliderInput("f1target", "Target f\U2081", min = 0,
+  #                                              max = 1, value = c(1/3)),
+  #                                  sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04)))
+  #   }})
+  # 
+  # output$UIstrat3b <- renderUI({
+  #   req(input$S)
+  #   if (input$S != 3) {NULL}
+  #   else {
+  #     req(input$fix3)
+  #     switch(input$fix3,
+  #            "O"=box(title="Stratum 1 Info", status="warning", solidHeader=TRUE,
+  #                          width=12,
+  #                          sliderInput("range", "Range of f\U2081", min = 0,
+  #                                      max = 1, value = c(1/6, 1/2)),
+  #                          sliderInput("f1target", "Target f\U2081", min = 0,
+  #                                      max = 1, value = c(1/3)),
+  #                          sliderInput("pi01","\U03C0\U2080\U2081", min=0, max=1, value=.04)),
+  #            "S"=box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
+  #                                  width=12,
+  #                                  sliderInput("f2target", "Target f\U2082", min = 0,
+  #                                              max = 1, value=c(1/3)),
+  #                                  sliderInput("pi02", "\U03C0\U2080\U2082", min=0, max=1, value=.06)))
+  #   }})
+  # 
+  # output$UIstrat3c <- renderUI({
+  #   req(input$S)
+  #   if (input$S != 3) {NULL}
+  #   else {
+  #     req(input$fix3)
+  #     switch(input$fix3,
+  #            "O"=box(title="Stratum 2 Info", status="warning", solidHeader=TRUE,
+  #                          width=12,
+  #                          sliderInput("f2target", "Target f\U2082", min = 0,
+  #                                      max = 1, value = c(1/3)),
+  #                          sliderInput("pi02","\U03C0\U2080\U2082", min=0, max=1, value=.06)),
+  #            "S"=box(title="Stratum 3 Info", status="warning", solidHeader=TRUE,
+  #                                  width=12,
+  #                                  sliderInput("pi03", "\U03C0\U2080\U2083", min=0, max=1, value=.05)))
+  #   }})
   
   
   
   
   #### Cluster Info Column ####
   
-  output$UIclust <- renderUI({
-    req(input$ICRT)
-    switch(input$ICRT,
-           "IRT" = NULL,
-           "CRT" = box(
-             title="Cluster Information", status="info", solidHeader=TRUE,
-             width=12,
-             numericInput("m","Mean Cluster Size", value=4),
-             numericInput("cv","Coefficient of Variation of Cluster Size", value=0),
-             sliderInput("rho0","\U03C1\U2080", min=0, max=1, value=.1)
-             #sliderInput("rho0st","rho_0^*", min=0, max=1, value=.07)
-           ))
+  output$UIclusta <- renderUI({
+    req(input$ICRT,input$S)
+    if (input$ICRT=="CRT" & input$S > 1) {
+      box(width=12,
+          helpText("Assume Common Within-Stratum ICC (\U03C1\U2080\U002A) and Cluster Size Distribution or Specify Within-Stratum ICCs?"),
+          radioButtons("rhoChoice",NULL,choices=list("Common"="C","Within-Stratum"="S"),
+                       selected=c("C"),inline=FALSE))
+    } else {
+      NULL
+    }
+  })
+  
+  output$UIclustb <- renderUI({
+    req(input$ICRT,input$S)
+    if (input$ICRT == "IRT") {
+      NULL
+    } else if (input$S == 1) {
+      box(
+        title="Overall Clustering Information",
+        status="info", solidHeader=TRUE, width=12,
+        numericInput("m","Mean Cluster Size", value=4),
+        numericInput("cv","Coefficient of Variation of Cluster Size", value=0),
+        sliderInput("rho0","\U03C1\U2080", min=0, max=1, value=.1))
+    } else {
+      req(input$rhoChoice)
+      if (input$rhoChoice=="C") {
+        box(
+          title="Overall Clustering Information",
+          status="info", solidHeader=TRUE, width=12,
+          numericInput("m","Mean Cluster Size", value=4),
+          numericInput("cv","Coefficient of Variation of Cluster Size", value=0),
+          sliderInput("rho0","\U03C1\U2080", min=0, max=1, value=.1))
+      } else {
+        box(
+          title="Overall Clustering Information",
+          status="info", solidHeader=TRUE, width=12,
+          sliderInput("rho0","\U03C1\U2080", min=0, max=1, value=.1))
+      }
+    }
+  })
+  
+  output$UIclustc <- renderUI({
+    req(input$ICRT,input$S, input$rhoChoice)
+    if (input$ICRT=="CRT" & input$S==2 & input$rhoChoice=="S") {
+      box(width=12,
+          title="Within-Stratum Clustering Information", status="info", solidHeader=TRUE,
+          numericInput("m1","Mean Cluster Size in Stratum 1", value=4),
+          numericInput("cv1","Coefficient of Variation of Cluster Size in Stratum 1", value=0),
+          sliderInput("rho01","\U03C1\U2080\U2081", min=0, max=1, value=.1),
+          numericInput("m2","Mean Cluster S   ze in Stratum 2", value=4),
+          numericInput("cv2","Coefficient of Variation of Cluster Size in Stratum 2", value=0),
+          sliderInput("rho02","\U03C1\U2080\U2082", min=0, max=1, value=.1))
+    } else if (input$ICRT=="CRT" & input$S==3 & input$rhoChoice=="S") {
+      req(input$rho0)
+      box(width=12,
+          title="Within-Stratum Clustering Information", status="info", solidHeader=TRUE,
+          numericInput("m1","Mean Cluster Size in Stratum 1", value=4),
+          numericInput("cv1","Coefficient of Variation of Cluster Size in Stratum 1", value=0),
+          sliderInput("rho01","\U03C1\U2080\U2081", min=0, max=1, value=.1),
+          numericInput("m2","Mean Cluster Size in Stratum 2", value=4),
+          numericInput("cv2","Coefficient of Variation of Cluster Size in Stratum 2", value=0),
+          sliderInput("rho02","\U03C1\U2080\U2082", min=0, max=1, value=.1),
+          numericInput("m3","Mean Cluster Size in Stratum 3", value=4),
+          numericInput("cv3","Coefficient of Variation of Cluster Size in Stratum 3", value=0),
+          sliderInput("rho03","\U03C1\U2080\U2083", min=0, max=1, value=.1))
+    } else {
+      NULL
+    }
   })
 
 
@@ -742,7 +1060,22 @@ output$UIerrs <- renderUI({
 })
   
 output$uiTargErr <- renderUI({
-  req(input$f1target,input$S,input$ICRT)
+  req(input$S, input$ICRT, input$txFX)
+  if (input$S == 2) {
+    req(input$fix2)
+    if (input$fix2 == "O") {
+      req(input$f1target, input$pi01, input$pi0)
+    } else {
+      req(input$f1target, input$pi01, input$pi02)
+    }
+  } else if (input$S == 3) {
+    req(input$fix3)
+    if (input$fix3 == "O") {
+      req(input$f1target, input$pi01, input$pi0, input$f2target, input$pi02)
+    } else {
+      req(input$f1target, input$pi01, input$pi02, input$f2target, input$pi03)
+    }
+  }
   ResCapt <- ResultsFnCapt(input$f1target)
   if (sum(ResCapt=="A")==length(ResCapt)) {
     box(title="Target Trial Errors", status="danger", solidHeader=TRUE,
@@ -750,7 +1083,7 @@ output$uiTargErr <- renderUI({
         helpText(p("These target parameters do not yield a sample size"),
                         p("Check for parameter errors at the bottom of the parameter selection page."),
                         p("Some parameters in the f\U2081 range may still be functional; see Sensitivity tabs.")))
-  } else if (input$S > 1 & input$ICRT == "CRT" & is.na(ResCapt$rho0s[1])) {
+  } else if (input$S > 1 & input$ICRT == "CRT" & input$rhoChoice == "C" & is.na(ResCapt$rho0s[1])) {
     box(title="Target Trial Errors", status="danger", solidHeader=TRUE,
         width=12,
         helpText(p("These target parameters do not yield a common within-stratum ICC."),
